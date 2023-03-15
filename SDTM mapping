@@ -1,0 +1,186 @@
+libname clinical '/home/u61152431/Clinicaltrialdata';
+
+
+*****Import csv files into SAS************;
+FILENAME REFFILE1 '/home/u61152431/Clinicaltrialdata/RAN.csv';
+FILENAME REFFILE2 '/home/u61152431/Clinicaltrialdata/DEM.csv';
+FILENAME REFFILE3 '/home/u61152431/Clinicaltrialdata/DEM2.csv';
+FILENAME REFFILE4 '/home/u61152431/Clinicaltrialdata/COMP.csv';
+FILENAME REFFILE5 '/home/u61152431/Clinicaltrialdata/ELG.csv';
+FILENAME REFFILE6 '/home/u61152431/Clinicaltrialdata/ENR.csv';
+FILENAME REFFILE7 '/home/u61152431/Clinicaltrialdata/AE.csv';
+FILENAME REFFILE8 '/home/u61152431/Clinicaltrialdata/SAE.csv';
+PROC IMPORT DATAFILE=REFFILE1
+	DBMS=CSV
+	OUT=WORK.RAN;
+	GETNAMES=YES;
+RUN;
+PROC IMPORT DATAFILE=REFFILE2
+	DBMS=CSV
+	OUT=WORK.DEM;
+	GETNAMES=YES;
+RUN;
+PROC IMPORT DATAFILE=REFFILE3
+	DBMS=CSV
+	OUT=WORK.DEM2;
+	GETNAMES=YES;
+RUN;
+PROC IMPORT DATAFILE=REFFILE4
+	DBMS=CSV
+	OUT=WORK.COMP;
+	GETNAMES=YES;
+RUN;
+PROC IMPORT DATAFILE=REFFILE5
+	DBMS=CSV
+	OUT=WORK.ELG;
+	GETNAMES=YES;
+RUN;
+PROC IMPORT DATAFILE=REFFILE6
+	DBMS=CSV
+	OUT=WORK.ENR;
+	GETNAMES=YES;
+RUN;
+PROC IMPORT DATAFILE=REFFILE7
+	DBMS=CSV
+	OUT=WORK.AE replace;
+	GETNAMES=YES;
+RUN;
+PROC IMPORT DATAFILE=REFFILE8
+	DBMS=CSV
+	OUT=WORK.SAE;
+	GETNAMES=YES;
+RUN;
+
+PROC print DATA=WORK.RAN; 
+RUN;
+PROC print DATA=WORK.DEM;
+RUN;
+PROC print DATA=WORK.DEM2;
+RUN;
+PROC print DATA=WORK.COMP;
+RUN;
+PROC print DATA=WORK.AE;
+RUN;
+PROC print DATA=WORK.ENR;
+RUN;
+
+*************************************;
+/*Combining all the data into one dataset*/
+
+proc sort data=work.DEM out=demographic;
+by patdeid;
+run;
+
+proc sort data=work.DEM2 out=demographic2;
+by patdeid;
+run;
+
+*proc sort data=work.dem_total out=dem_total2;
+*by patdeid;
+*run;
+
+proc sort data=work.RAN out=Random;
+by patdeid;
+run;
+
+proc sort data=work.COMP out=Completion;
+by patdeid;
+run;
+
+proc sort data=work.AE out=Adverse;
+by patdeid;
+run;
+
+/*Combining all the data into one dataset*/
+
+data demographic2_copy; set demographic2; 
+DEM203A_=input(DEM203A,3.);
+DEM204A_=input(DEM204A,3.);
+DEM204D_=put(DEM204D,$1.);
+DEM204F_=input(DEM204F,3.);
+rename DEM202=DEM02 DEM203=DEM03 DEM203A_=DEM03A DEM204A_=DEM04A DEM204B=DEM04B DEM204C=DEM04C DEM204D_=DEM04D DEM204E=DEM04E DEM204F_=DEM04F;
+run;
+
+data dem_total;
+merge demographic demographic2_copy;
+by patdeid;
+run;
+
+data combine_all ;
+merge Random(in=a) dem_total(in=b) Completion(in=c) ELG;
+by patdeid;
+run;
+
+proc print data=combine_all;
+run;
+
+
+/*Creating Final DM dataset with required attributes*/
+
+data dm;
+set combine_all;
+attrib STUDYID length = $7 label = 'Study Identifier';
+attrib DOMAIN length = $8 label = 'Domain Abbreviation';
+attrib USUBJID length = $40 label = 'Unique Subject Identifier';
+attrib SUBJID length =$8 label = 'Subject Identifier for the Study';
+attrib RFSTDTC length = $64 label = 'Subject Reference Start Date/Time';
+attrib RFENDTC length = $64 label = 'Subject Reference End Date/Time';
+attrib SITEID length = $40 label = 'Study Site Identifier';
+attrib INVID length = $40 label = 'Investigator Identifier';
+attrib INVNAM length = $40 label = 'Investigator Name';
+attrib BRTHDTC length = $64 label = 'Date/Time of Birth';
+attrib AGE length = 8 label = 'Age in AGEU at Reference Date/Time';
+attrib AGEU length = $10 label = 'Age Units';
+attrib SEX length = $6 label = 'Sex';
+attrib RACE length = $30 label = 'Race';
+attrib ETHNIC length = $40 label = 'Ethnicity';
+attrib ARMCD length = $20 label = 'Planned Arm Code';
+attrib ARM length = $40 label = 'Description of Planned Arm';
+attrib COUNTRY length = $3 label = 'Country';
+attrib DMDY length = 8 label = 'Study Day of Collection';
+keep STUDYID DOMAIN USUBJID SUBJID RFSTDTC RFENDTC SITEID INVID INVNAM
+BRTHDTC AGE AGEU SEX RACE ETHNIC ARMCD ARM COUNTRY DMDY;
+STUDYID='CTN0032';
+DOMAIN='DM';
+SITEID='0032';
+SUBJID=put(PATDEID, z4.);
+USUBJID=compress("CTN0032"||'-'||SITEID||'-'||SUBJID);
+INVID='01';
+INVNAM='LISA METSCH';
+RFSTDTCa=intnx("Year",RAN02DT,48,"same");
+RFSTDTC=put(RFSTDTCa,IS8601da.);
+RFENDTCa=intnx("Year",COMP02DT,48,"same");
+RFENDTC=put(RFENDTCa,IS8601da.);
+dob=intnx("Year",DEM01DT,48,"same");
+BRTHDTC=put(dob,IS8601da.);
+AGE=intck("Year",DEM01DT, RAN02DT);
+AGEU="YEARS";
+If DEM02=1 then sex='M'; 
+else if DEM02=2 then sex='F'; 
+else sex=" "; 
+if DEM04a=1 then race='AMERICAN INDIAN OR ALASKA NATIVE'; 
+else if DEM04b=1 then race='ASIAN'; 
+else if DEM04c=1 then race='BLACK OR AFRICAN AMERICAN'; 
+else if DEM04d=1 then race='NATIVE HAWAIIAN/PACIFIC ISLANDER'; 
+else if DEM04e=1 then  race='WHITE'; else race='OTHER ';
+if DEM03=1 then ETHNIC='HISPANIC OR LATINO';
+else if DEM03=2 then ETHNIC='NOT HISPANIC OR LATINO';
+else if DEM03=98 then ETHNIC='PATICIPANT CHOOSSES NOT TO ANSWER';
+if RAN04=1 then ARMCD='GROUP 1';
+else if RAN04=2 then ARMCD='GROUP 2';
+else if RAN04=3 then ARMCD='GROUP 3';
+else ARMCD="SCN FAIL";
+if RAN04=1 then ARM='GROUP 1-ONSITE RAPID HIV TESTING WITH RESPECT-2 COUNSELING';
+else if RAN04=2 then ARM='GROUP 2-ONSITE RAPID HIV TESTING WITH INFORMATION ONLY';
+else if RAN04=3 then ARM='GROUP 3-REFERRAL FOR OFFSITE HIV TESTING';
+else ARM="SCREEN FAILURE";
+COUNTRY='USA';
+DMDTCa=intnx("Year",RAN02DT,48,"same");
+DMDTC=put(DMDTCa,IS8601da.);
+DMDY=RAN02DT-ELGDT;
+run;
+
+proc contents data=dm varnum out=a;
+run;
+
+/*/*/*/*/*/*/*/*/*/*/*/*End of Program*/*/*/*/*/*/*/*/*/*/*/*/;
