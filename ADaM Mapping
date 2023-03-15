@@ -1,0 +1,170 @@
+***************************************************************;
+
+/*Creating ADSL dataset with required attributes*/
+
+***************************************************************;
+
+/* Adding SUBJID to all tables before merging */
+
+data RAN2;
+set RAN;
+SUBJID=put(PATDEID, z4.);
+run;
+
+data adverse2;
+set adverse;
+SUBJID=put(PATDEID, z4.);
+run;
+
+data COMP2;
+set COMP;
+SUBJID=put(PATDEID, z4.);
+run;
+
+/* Merging */
+
+data table1;
+merge dm adverse2(drop=AEID SITE PATIENTNUMBER AE01 AE04 AE05 AE06 AE07 AE08 AE09 AE03DT AE09DT VISITDT); 
+by SUBJID;
+keep STUDYID USUBJID SUBJID SITEID AGE AGEU SEX RACE ARM;
+run;
+
+data table2;
+merge table1 RAN2(keep= SUBJID RAN03 RAN02DT);
+by SUBJID;
+run;
+
+proc sort data = table2;
+by SUBJID;
+run;
+
+data table3;
+merge table2 COMP2(keep = SUBJID COMP03 COMPDT);
+by SUBJID;
+run;
+
+data ADSL;
+set table3;
+attrib FASFL length =$10 label = 'Full Analysis Set Population Flag';
+attrib SAFFL length =$10 label = 'Safety Population Flag';
+attrib ITTFL length =$10 label = 'Intent-To-Treat Population Flag';
+attrib COMPLFL length =$10 label = 'Completers Char Population Flag';
+attrib TRTSDTF length =$10 label = 'Date of First Exposure to treatment';
+attrib TRTEDTF length =$10 label = 'Date of First Exposure to treatment';
+format COMP02DT yymmdd10. COMPDT yymmdd10.;
+TRTEDTFa=intnx("Year",COMPDT,48,"same");
+TRTEDTF=put(TRTEDTFa,yymmdd10.);
+TRTSDTFa=intnx("Year",RAN02DT,48,"same");
+TRTSDTF=put(TRTSDTFa,yymmdd10.);
+if patdeid= '.' then FASFL = "N";
+else FASFL = "Y";
+if AE02 = ' ' then SAFFL = "Y";
+else SAFFL = "N";
+if RAN03 = ' ' then ITTFL = "N";
+else ITTFL = "Y";
+if COMP03 = '1' then COMPLFL = "Y";
+else COMPLFL = "N";
+drop TRTEDTFa TRTSDTFa COMP02DT COMPDT RAN03 COMP03 AE02 RAN02DT PATDEID; 
+run;
+
+
+/* Combining SDTM-DM and ADSL */
+data addm;
+merge dm adsl;
+by SUBJID;
+run;
+
+
+/* Combining SDTM-AE with ADSL -- Adverse event analysis dataset */
+data ADAE;
+merge AE adsl;
+by SUBJID;
+run;
+
+
+/* Combining SDTM-LB with ADSL -- Laboratory analysis dataset */
+data ADLB;
+merge LB adsl;
+by SUBJID;
+run;
+
+*********************************************************************;
+*********************************************************************;
+
+/*Combining AE and SAE into one dataset*/
+
+proc sort data=work.AE out=adverse1;
+by patdeid;
+run;
+
+proc sort data=work.SAE out=S_adverse2;
+by patdeid;
+run;
+
+data combine_AE ;
+merge adverse1(in=a) S_adverse2(in=b);
+by patdeid;
+run;
+
+
+/*Creating Final AE dataset with required attributes*/
+
+data AE;
+set combine_AE;
+attrib STUDYID length = $7 label = 'Study Identifier';
+attrib DOMAIN length = $8 label = 'Domain Abbreviation';
+attrib USUBJID length = $40 label = 'Unique Subject Identifier';
+attrib AESEQ length = $64 label = 'Sequence Number';
+attrib AETERM length = $64 label = 'Reported Term for the Adverse Event';
+attrib AESEV length = $40 label = 'Severity/Intensity';
+attrib AESER length = $40 label = 'Serious Event';
+attrib AEACN length = $40 label = 'Action Taken with Study Treatment';
+attrib AEOUT length = $64 label = 'Outcome of Adverse Event';
+attrib AESCONG length = $8 label = 'Congenital Anomaly or Birth Defect';
+attrib AESDISAB length = $10 label = 'Persist or Signif Disability/Incapacity';
+attrib AESHOSP length = $6 label = 'Requires or Prolongs Hospitalization';
+attrib AECONTRT length = $30 label = 'Concomitant or Additional Trtmnt Given';
+attrib AESTDTC length = $40 label = 'Start Date/Time of Adverse Event';
+attrib AEENDTC length = $20 label = 'End Date/Time of Adverse Event';
+keep STUDYID DOMAIN USUBJID AESEQ AETERM AESEV AESER AEACN AEOUT AESCONG AESDISAB AESHOSP
+AECONTRT AESTDTC AEENDTC;
+STUDYID='CTN0032';
+DOMAIN='AE';
+SUBJID=put(PATDEID, z4.);
+USUBJID=compress("CTN0032"||'-'||SITEID||'-'||SUBJID);
+AESEQ=put(SAEAENUM, z1.);
+if AE04=1 then AESEV='MILD'; 
+else if AE04=2 then AESEV='MODERATE';
+else if AE04=1 then AESEV='SEVERE'; 
+else if AE04=4 then AESEV='LIFE THREATENING';
+else if AE04=5 then AESEV='DEATH';
+if AE07=0 then AESER='NO'; 
+else if AE07=1 then AESER='YES';
+if AE05=0 then AEACN='NONE';
+else if AE05=1 then AEACN='TEMPORARILY DISCONTINUED STUDY THERAPY';
+else if AE05=2 then AEACN='DISCONTINUED STUDY THERAPY';
+else if AE05=3 then AEACN='TERMINATED FROM STUDY';
+if AE08=1 then AEOUT='RESOLVED';
+else if AE08=2 then AEOUT='RESOLVED WITH SEQUELAE' ;
+else if AE08=3 then AEOUT='NOT RESOLVED';
+else if AE08=4 then AEOUT='FATAL';
+if SAETYPE=1 then AETERM='INITIAL';
+else if SAETYPE=2 then AETERM='FOLLOW-UP'; 
+if SAE02E=0 then AESCONG='NO'; 
+else if SAE02E=1 then AESCONG='YES';
+if SAE02D =0 then AESDISAB ='NO';
+else if SAE02D =1 then AESDISAB ='YES';
+if SAE02C =0 then AESHOSP ='NO';
+else if SAE02C =1 then AESHOSP='YES';
+if SAE04 =0 then AECONTRT='NO';
+else if SAE04 =1 then AECONTRT='YES';
+else AECONTRT ='UNKNOWN';
+AESTDTCa=intnx("Year",AE03DT,48,"same");
+AESTDTC=put(AESTDTCa,IS8601da.);
+AEENDTCa=intnx("Year",AE09DT,48,"same");
+AEENDTC=put(AEENDTCa,IS8601da.);
+run;
+
+****************************************************************;
+****************************************************************;
+
