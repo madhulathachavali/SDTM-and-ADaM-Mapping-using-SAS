@@ -6,39 +6,39 @@ SDTM mapping is the process of converting raw clinical trial data into the Study
 
 Objective: The objective of this SAS program is to process and combine multiple CSV files containing clinical trial data to create final datasets suitable for analysis.
 
-####Data Import:
+#### Data Import:
 
 CSV files containing clinical trial data are imported into SAS datasets using PROC IMPORT.
 Each CSV file corresponds to a specific type of data, such as demographics, randomization information, adverse events, etc.
 Data from each CSV file is imported into separate SAS datasets.
 
-####Data Processing:
+#### Data Processing:
 
 Data from multiple sources is merged into one dataset named "dem_total".
 Final datasets are created by merging various datasets and assigning values based on specific conditions.
 Certain variables are processed to create additional attributes required for analysis.
 
 
-####Final Datasets Created:
+#### Final Datasets Created:
 
-dm (Demographic Data):
+#### dm (Demographic Data):
 
 Contains demographic information of subjects in the clinical trial.
 Includes attributes such as age, sex, race, ethnicity, etc.
 
-####ADSL (Adverse Events Analysis Dataset):
+#### ADSL (Adverse Events Analysis Dataset):
 
 Combines adverse event data with demographic information.
 Flags different population sets based on criteria such as safety, intent-to-treat, completeness, etc.
 
 
-####AE (Adverse Events Dataset):
+#### AE (Adverse Events Dataset):
 
 Contains processed adverse event data.
 Includes details such as event severity, seriousness, actions taken, outcomes, etc.
 
 
-####Conclusion:
+#### Conclusion:
 
 The SAS program successfully imports, processes, and combines clinical trial data to create final datasets suitable for further analysis.
 The final datasets provide comprehensive information necessary for analyzing demographics, adverse events, and other relevant aspects of the clinical trial.
