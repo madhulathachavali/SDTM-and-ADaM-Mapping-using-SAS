@@ -4,12 +4,14 @@ The aim is to conduct SDTM and ADaM mapping for the "HIV Rapid Testing and Couns
 
 SDTM mapping is the process of converting raw clinical trial data into the Study Data Tabulation Model (SDTM). ADaM mapping, on the other hand, involves converting data from SDTM into the Analysis Data Model (ADaM), which is a standardized format used for analyzing clinical trial data.
 
-#### Objective: The objective of this SAS program is to process and combine multiple CSV files containing clinical trial data to create final datasets suitable for analysis.
+#### Objective: 
+
+The objective is to process and combine multiple CSV files containing clinical trial data to create final datasets suitable for analysis.
 
 #### Data Import:
 
 CSV files containing clinical trial data are imported into SAS datasets using PROC IMPORT.
-Each CSV file corresponds to a specific type of data, such as demographics, randomization information, adverse events, etc.
+Each CSV file corresponds to specific data, such as demographics, randomization information, adverse events, etc.
 Data from each CSV file is imported into separate SAS datasets.
 
 #### Data Processing:
@@ -29,13 +31,10 @@ Includes attributes such as age, sex, race, ethnicity, etc.
 #### ADSL (Adverse Events Analysis Dataset):
 
 Combines adverse event data with demographic information.
-Flags different population sets based on criteria such as safety, intent-to-treat, completeness, etc.
-
 
 #### AE (Adverse Events Dataset):
 
 Contains processed adverse event data.
-Includes details such as event severity, seriousness, actions taken, outcomes, etc.
 
 
 #### Conclusion:
