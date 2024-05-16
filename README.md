@@ -4,7 +4,7 @@ The aim is to conduct SDTM and ADaM mapping for the "HIV Rapid Testing and Couns
 
 SDTM mapping is the process of converting raw clinical trial data into the Study Data Tabulation Model (SDTM). ADaM mapping, on the other hand, involves converting data from SDTM into the Analysis Data Model (ADaM), which is a standardized format used for analyzing clinical trial data.
 
-Objective: The objective of this SAS program is to process and combine multiple CSV files containing clinical trial data to create final datasets suitable for analysis.
+#### Objective: The objective of this SAS program is to process and combine multiple CSV files containing clinical trial data to create final datasets suitable for analysis.
 
 #### Data Import:
 
