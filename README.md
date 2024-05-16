@@ -11,7 +11,7 @@ The objective is to process and combine multiple CSV files containing clinical t
 #### Data Import:
 
 CSV files containing clinical trial data are imported into SAS datasets using PROC IMPORT.
-Each CSV file corresponds to specific data, such as demographics, randomization information, adverse events, etc.
+Each CSV file corresponds to specific data, such as demographics (DEM), randomization (RAN), adverse events (AE), and study completion (COMP).
 Data from each CSV file is imported into separate SAS datasets.
 
 #### Data Processing:
