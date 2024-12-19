@@ -23,7 +23,7 @@ Certain variables are processed to create additional attributes required for ana
 
 #### Final Datasets Created:
 
-#### dm (Demographic Data):
+#### DM (Demographic Data):
 
 Contains demographic information of subjects in the clinical trial.
 Includes attributes such as age, sex, race, ethnicity, etc.
